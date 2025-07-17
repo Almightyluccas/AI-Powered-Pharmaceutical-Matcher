@@ -1,2 +1,5 @@
 # Ignore all files and subfolders inside the models directory
 models/*
+!models/README.md
+.idea
+
