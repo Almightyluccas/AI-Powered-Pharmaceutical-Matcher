@@ -232,7 +232,7 @@ def run_ai_powered_matching(model_path: str, moleculas_file: str, price_files_di
 if __name__ == '__main__':
     # --- Configuration ---
     script_directory = os.path.dirname(os.path.abspath(__file__))
-    MODEL_PATH = os.path.join(script_directory, "..", "models", "t5-pharma-translator-v8")
+    MODEL_PATH = os.path.join(script_directory, "..", "models", "t5-pharma-translator-v10")
     MOLECULAS_FILE = os.path.join(script_directory, "..", "data", "raw", "moleculas.xls")
     PRICE_FILES_DIR = os.path.join(script_directory, "..", "data", "raw", "prices")
 

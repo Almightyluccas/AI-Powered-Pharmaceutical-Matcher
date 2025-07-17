@@ -51,7 +51,7 @@ The project implements a "bootstrapping" workflow to continuously improve the AI
 
 4. The model is re-trained with this larger, more diverse dataset, creating an even smarter version.
 
-This iterative cycle has proven highly effective, increasing the number of verified matches from an initial **48** to **over 230**—a nearly **500% improvement** in performance.
+This iterative cycle has proven highly effective, increasing the number of verified matches from an initial **48** to **over 320**—a nearly **700% improvement** in performance.
 
 ---
 
@@ -112,11 +112,11 @@ The project follows a clear, step-by-step workflow.
 
 3. **Bootstrapping (The Improvement Loop):**
 
-    * Run `03_bootstrap_new_data.py` to use the latest model to process all raw data and generate a `model_predictions.csv` file.
+   * Run `03_bootstrap_new_data.py` to use the latest model to process all raw data and generate a `model_predictions.csv` file.
 
-    * Manually review this predictions file, correct any errors, and add the new, verified pairs to your `MASTER_TRAINING_DATASET.csv`.
+   * Manually review this predictions file, correct any errors, and add the new, verified pairs to your `MASTER_TRAINING_DATASET.csv`.
 
-    * Repeat Step 2 to train an even better model.
+   * Repeat Step 2 to train an even better model.
 
 4. **Final Matching:** Run `04_run_final_matching.py` to use your best-trained model to perform the final, end-to-end matching task and generate the `moleculas_updated_final_AI.csv` report.
 

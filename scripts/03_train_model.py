@@ -112,11 +112,11 @@ if __name__ == '__main__':
     DATASET_PATH = "../data/processed/ai/validated/verified_by_rules.csv"
 
     # This is where your new, custom model will be saved:
-    MODEL_OUTPUT_PATH = "../models/t5-pharma-translator-v8"
+    MODEL_OUTPUT_PATH = "../models/t5-pharma-translator-v11"
 
     # For the very first training, we use the base Google model.
     # For re-training/fine-tuning, you would change this to MODEL_OUTPUT_PATH
     # to start from your previously trained model.
-    BASE_MODEL = "../models/t5-pharma-translator-v7"
+    BASE_MODEL = "../models/t5-pharma-translator-v10"
 
     train_pharma_translator(DATASET_PATH, MODEL_OUTPUT_PATH, base_model=BASE_MODEL)

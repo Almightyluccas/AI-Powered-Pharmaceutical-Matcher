@@ -49,7 +49,7 @@ def get_structured_features(name: str):
 def validate_ai_matches(log_file: str):
     """
     Validates matches from an AI log file based ONLY on dosage and quantity,
-    and produces simplified output files.
+    and produces three distinct output files for training, review, and reporting.
     """
     print("--- Starting Rule-Based Validation of AI Matches (Dosage & Quantity Only) ---")
 
@@ -65,7 +65,10 @@ def validate_ai_matches(log_file: str):
         print("❌ ERROR: Log file is missing required columns.")
         return
 
-    verified_rows, rejected_rows = [], []
+    # Create lists to hold the different outputs
+    training_data_rows = []
+    verified_with_price_rows = []
+    rejected_rows = []
 
     print(f"Validating {len(df_log)} matches...")
     for index, row in df_log.iterrows():
@@ -83,15 +86,17 @@ def validate_ai_matches(log_file: str):
             is_verified = False
             rejection_reason.append(f"Quantity Mismatch ({molecula_features['quantity']} vs {matched_features['quantity']})")
 
-        # --- Decision and Simplified Logging ---
+        # --- Decision and Logging ---
         if is_verified:
-            # Only log the two product names for verified matches
-            verified_rows.append({
-                'input_text': row['Moleculas_Produto (Y)'],
-                'target_text': row['Matched_Price_File_Produto (X)']
+            # Add to the list for the clean training data file
+            training_data_rows.append({
+                'input_text': row['Matched_Price_File_Produto (X)'],
+                'target_text': row['Moleculas_Produto (Y)']
             })
+            # Add the full row to the detailed verified log
+            verified_with_price_rows.append(row.to_dict())
         else:
-            # Log the names and the reason for rejection
+            # Add the names and the reason for rejection to the rejected log
             rejected_rows.append({
                 'Moleculas_Produto (Y)': row['Moleculas_Produto (Y)'],
                 'Matched_Price_File_Produto (X)': row['Matched_Price_File_Produto (X)'],
@@ -105,25 +110,33 @@ def validate_ai_matches(log_file: str):
 
     print("\n--- Validation Complete ---")
 
-    # Save the verified matches
-    if verified_rows:
-        df_verified = pd.DataFrame(verified_rows)
-        output_verified = os.path.join(output_dir, "verified_by_rules.csv")
-        df_verified.to_csv(output_verified, index=False, encoding='utf-8-sig')
-        print(f"✅ Found {len(df_verified)} fully verified matches. Saved to: {output_verified}")
-        print("\n--- Sample of Verified Matches ---")
-        print(df_verified.head().to_string())
+    # Save the clean training data file
+    if training_data_rows:
+        df_training = pd.DataFrame(training_data_rows).drop_duplicates()
+        output_training = os.path.join(output_dir, "verified_by_rules.csv")
+        df_training.to_csv(output_training, index=False, encoding='utf-8-sig')
+        print(f"\n✅ Created clean training data file with {len(df_training)} pairs.")
+        print(f"   -> Saved to: {output_training}")
     else:
-        print("ℹ️ No matches passed the rule-based verification.")
+        print("\nℹ️ No matches passed verification. No training data file was created.")
+
+    # Save the detailed verified log with prices
+    if verified_with_price_rows:
+        df_verified_detailed = pd.DataFrame(verified_with_price_rows)
+        output_verified_detailed = os.path.join(output_dir, "verified_matches_with_prices.csv")
+        df_verified_detailed.to_csv(output_verified_detailed, index=False, encoding='utf-8-sig')
+        print(f"✅ Created detailed log with {len(df_verified_detailed)} verified matches (including prices).")
+        print(f"   -> Saved to: {output_verified_detailed}")
+    else:
+        print("ℹ️ No detailed verified log to save.")
 
     # Save the rejected matches
     if rejected_rows:
         df_rejected = pd.DataFrame(rejected_rows)
         output_rejected = os.path.join(output_dir, "rejected_by_rules.csv")
         df_rejected.to_csv(output_rejected, index=False, encoding='utf-8-sig')
-        print(f"\n❌ Found {len(df_rejected)} rejected matches for review. Saved to: {output_rejected}")
-        print("\n--- Sample of Rejected Matches ---")
-        print(df_rejected.head().to_string())
+        print(f"❌ Found {len(df_rejected)} rejected matches for review.")
+        print(f"   -> Saved to: {output_rejected}")
     else:
         print("ℹ️ No matches were rejected by the rules.")
 

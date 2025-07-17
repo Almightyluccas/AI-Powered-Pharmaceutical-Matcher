@@ -6,4 +6,6 @@ v4 eval_loss is 0.025. gave me 241 total results. filtered down to 186
 v5 eval_loss is 0.0097. gave me 294 total results. Filtered down to 211.
 v6 eval_loss is 0.0056. gave me 299 total results. Filtered down to 234.
 v7 had to start from scratch due to error being found. eval_loss is 0.0237. gave me 300 total results. Filtered down to 222.
-v8 eval_loss is 0.0057. gave me
+v8 eval_loss is 0.0057. gave me 336 total results. Filtered down to 241.
+v9 eval_loss is ???. gave me 387 total results. Filtered down to 278.
+v10 eval_loss is 0.009 gave me 452 total results. Filtered down to 321.
