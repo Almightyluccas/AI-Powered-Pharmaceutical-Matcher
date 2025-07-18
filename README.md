@@ -1,4 +1,4 @@
-# AI-Powered Pharmaceutical Matcher
+# AI-Powered Pharmaceutical Reconciliation
 
 ## 1. Project Overview
 
