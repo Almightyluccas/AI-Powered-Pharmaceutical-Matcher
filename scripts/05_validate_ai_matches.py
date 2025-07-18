@@ -3,16 +3,13 @@ import re
 import os
 
 def get_structured_features(name: str):
-    """
-    Extracts only the critical numerical features (dosage and quantity) from a product name.
-    """
+
     if not isinstance(name, str):
         return {'original': '', 'dosage': 0, 'quantity': 0}
 
     original_name = name
     name_lower = name.lower()
 
-    # --- Dosage Extraction ---
     dosage_val = 0
     if dosage_match := re.search(r'(\d[\d.,]*)\s*mg\s*/\s*ml', name_lower):
         try: dosage_val = float(dosage_match.group(1).replace(',', '.'))
@@ -21,7 +18,6 @@ def get_structured_features(name: str):
         try: dosage_val = float(dosage_match.group(1).replace(',', '.'))
         except ValueError: dosage_val = 0
 
-    # --- Quantity Extraction ---
     quantity = 1
     if bl_match := re.search(r'(\d+)\s*bl\s*x\s*(\d+)', name_lower):
         quantity = int(bl_match.group(1)) * int(bl_match.group(2))
@@ -47,13 +43,8 @@ def get_structured_features(name: str):
     }
 
 def validate_ai_matches(log_file: str):
-    """
-    Validates matches from an AI log file based ONLY on dosage and quantity,
-    and produces three distinct output files for training, review, and reporting.
-    """
     print("--- Starting Rule-Based Validation of AI Matches (Dosage & Quantity Only) ---")
 
-    # --- 1. Load the AI's Match Log ---
     try:
         print(f"Loading AI match log: {log_file}")
         df_log = pd.read_csv(log_file)
@@ -65,7 +56,6 @@ def validate_ai_matches(log_file: str):
         print("❌ ERROR: Log file is missing required columns.")
         return
 
-    # Create lists to hold the different outputs
     training_data_rows = []
     verified_with_price_rows = []
     rejected_rows = []
@@ -86,31 +76,25 @@ def validate_ai_matches(log_file: str):
             is_verified = False
             rejection_reason.append(f"Quantity Mismatch ({molecula_features['quantity']} vs {matched_features['quantity']})")
 
-        # --- Decision and Logging ---
         if is_verified:
-            # Add to the list for the clean training data file
             training_data_rows.append({
                 'input_text': row['Matched_Price_File_Produto (X)'],
                 'target_text': row['Moleculas_Produto (Y)']
             })
-            # Add the full row to the detailed verified log
             verified_with_price_rows.append(row.to_dict())
         else:
-            # Add the names and the reason for rejection to the rejected log
             rejected_rows.append({
                 'Moleculas_Produto (Y)': row['Moleculas_Produto (Y)'],
                 'Matched_Price_File_Produto (X)': row['Matched_Price_File_Produto (X)'],
                 'Rejection_Reason': " & ".join(rejection_reason)
             })
 
-    # --- 4. Save Output Files ---
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(script_dir, "..", "data", "processed", "ai", "validated")
     os.makedirs(output_dir, exist_ok=True)
 
     print("\n--- Validation Complete ---")
 
-    # Save the clean training data file
     if training_data_rows:
         df_training = pd.DataFrame(training_data_rows).drop_duplicates()
         output_training = os.path.join(output_dir, "verified_by_rules.csv")
@@ -120,7 +104,6 @@ def validate_ai_matches(log_file: str):
     else:
         print("\nℹ️ No matches passed verification. No training data file was created.")
 
-    # Save the detailed verified log with prices
     if verified_with_price_rows:
         df_verified_detailed = pd.DataFrame(verified_with_price_rows)
         output_verified_detailed = os.path.join(output_dir, "verified_matches_with_prices.csv")
@@ -130,7 +113,6 @@ def validate_ai_matches(log_file: str):
     else:
         print("ℹ️ No detailed verified log to save.")
 
-    # Save the rejected matches
     if rejected_rows:
         df_rejected = pd.DataFrame(rejected_rows)
         output_rejected = os.path.join(output_dir, "rejected_by_rules.csv")
@@ -141,11 +123,11 @@ def validate_ai_matches(log_file: str):
         print("ℹ️ No matches were rejected by the rules.")
 
 
-if __name__ == '__main__':
-    # --- Configuration ---
-    script_directory = os.path.dirname(os.path.abspath(__file__))
-
-    # This should be the output from your AI matching script
-    AI_LOG_FILE = os.path.join(script_directory, "..", "data", "processed", "ai", "matching_log_AI.csv")
-
-    validate_ai_matches(AI_LOG_FILE)
+# if __name__ == '__main__':
+#     # --- Configuration ---
+#     script_directory = os.path.dirname(os.path.abspath(__file__))
+#
+#     # This should be the output from your AI matching script
+#     AI_LOG_FILE = os.path.join(script_directory, "..", "data", "processed", "ai", "matching_log_AI.csv")
+#
+#     validate_ai_matches(AI_LOG_FILE)

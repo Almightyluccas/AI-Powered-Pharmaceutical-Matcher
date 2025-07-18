@@ -3,34 +3,22 @@ import re
 import os
 
 def parse_currency_to_float(value: str | float) -> float | None:
-    """
-    Converts a currency string (e.g., 'R$ 1.234,56') or a number to a float.
-    Rounds to 2 decimal places to handle potential floating point inaccuracies.
-    Returns None if conversion fails.
-    """
     if isinstance(value, (int, float)):
-        # Round to handle floating point math issues, e.g., 14.160000001
         return round(float(value), 2) if value > 0 else None
 
     if not isinstance(value, str):
         return None
 
     try:
-        # Remove 'R$', spaces, use dot for decimal, and convert to float
         cleaned_value = value.replace('R$', '').replace('.', '').replace(',', '.').strip()
         return round(float(cleaned_value), 2)
     except (ValueError, AttributeError):
         return None
 
 def create_verified_dataset(moleculas_updated_file: str, log_file: str):
-    """
-    Creates a training dataset by using the product name as a key to verify that
-    the assigned price in the log matches one of the original prices in the updated file.
-    Also creates a detailed log of these verified matches.
-    """
+
     print("--- Starting Price Verification for Dataset Creation ---")
 
-    # --- 1. Load Input Files ---
     try:
         print(f"Loading main data file: {moleculas_updated_file}")
         df_updated = pd.read_csv(moleculas_updated_file)
@@ -41,7 +29,6 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
         print(f"❌ ERROR: Could not find a required file. {e}")
         return
 
-    # --- 2. Identify Columns Based on User's Rules ---
     product_col_updated = df_updated.columns[0]
 
     if len(df_updated.columns) <= 6:
@@ -53,7 +40,6 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
     print(f"Using Product Column from '{moleculas_updated_file}': '{product_col_updated}'")
     print(f"Using these columns for original price verification: {list(original_price_cols)}")
 
-    # --- 3. Create a Price Lookup Dictionary for Performance ---
     price_lookup = {}
     print("\nBuilding a lookup map of original prices...")
     for index, row in df_updated.iterrows():
@@ -62,9 +48,8 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
         prices.discard(None)
         price_lookup[product_name] = prices
 
-    # --- 4. Filter the Log File by Verifying Prices ---
     training_data = []
-    detailed_verified_log = [] # New list for the second CSV file
+    detailed_verified_log = []
     print("Verifying matches by comparing assigned price to original prices...")
 
     for index, log_row in df_log.iterrows():
@@ -77,15 +62,12 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
         original_prices_set = price_lookup.get(molecula_name)
 
         if original_prices_set and assigned_price in original_prices_set:
-            # This is a verified match. Add it to both lists.
 
-            # 1. Add to the simple training data list
             training_data.append({
                 'input_text': log_row['Matched_Price_File_Produto (X)'],
                 'target_text': log_row['Moleculas_Produto (Y)']
             })
 
-            # 2. Add to the new detailed log list
             detailed_verified_log.append({
                 'Moleculas_Produto': log_row['Moleculas_Produto (Y)'],
                 'Matched_Produto': log_row['Matched_Price_File_Produto (X)'],
@@ -93,12 +75,10 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
                 'Price_Source_File': log_row['Price_Source_File']
             })
 
-    # --- 5. Save the Final Datasets ---
     script_dir = os.path.dirname(__file__)
     output_dir = os.path.join(script_dir, "..", "data", "processed")
     os.makedirs(output_dir, exist_ok=True)
 
-    # Save the training data file
     if not training_data:
         print("\nℹ️ No matches could be verified by price. No training data file was created.")
     else:
@@ -110,7 +90,6 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
         print("\n--- Sample of Training Data ---")
         print(df_training.head().to_string())
 
-    # Save the new detailed log file
     if not detailed_verified_log:
         print("\nℹ️ No detailed verified log to save.")
     else:
@@ -124,11 +103,8 @@ def create_verified_dataset(moleculas_updated_file: str, log_file: str):
 
 
 if __name__ == '__main__':
-    # --- Configuration ---
-    # This makes paths relative to the script's location, making it more robust
     script_directory = os.path.dirname(__file__)
 
-    # AI VERSION
     MOLECULAS_UPDATED_FILE = os.path.join(script_directory, "..", "data", "processed", "ai", "moleculas_updated_final_AI.csv")
     MATCHING_LOG_FILE = os.path.join(script_directory, "..", "data", "processed", "ai", "matching_log_AI.csv")
 

@@ -7,7 +7,6 @@ import re
 from rapidfuzz import process, fuzz
 
 def load_model_and_tokenizer(model_path: str):
-    """Loads a fine-tuned T5 model and its tokenizer."""
     print(f"Loading custom model from: {model_path}")
     try:
         model = T5ForConditionalGeneration.from_pretrained(model_path)
@@ -21,11 +20,9 @@ def load_model_and_tokenizer(model_path: str):
         return None, None, None
 
 def standardize_names_with_ai(texts: list, model, tokenizer, device, batch_size: int = 16) -> list:
-    """Uses the trained AI model to translate a list of product names with robust error handling."""
     if not texts:
         return []
 
-    # Ensure all inputs are valid, non-empty strings
     original_texts = [str(text) for text in texts if text and isinstance(text, str) and str(text).strip()]
     if not original_texts:
         return []
@@ -47,10 +44,8 @@ def standardize_names_with_ai(texts: list, model, tokenizer, device, batch_size:
             predictions.extend(decoded_preds)
         except Exception as e:
             print(f"⚠️ Warning: An error occurred during a batch generation: {e}. Skipping batch.")
-            # Add empty strings for the failed batch to maintain list length
             predictions.extend([''] * len(batch))
 
-    # Safety Net: Fallback for any failed predictions
     final_predictions = []
     for original, pred in zip(original_texts, predictions):
         if pred and pred.strip():
@@ -62,7 +57,6 @@ def standardize_names_with_ai(texts: list, model, tokenizer, device, batch_size:
     return final_predictions
 
 def find_column_by_substring(df_columns: list, substrings: list) -> str | None:
-    """Finds the first column in a list that contains any of the given substrings."""
     for sub in substrings:
         for col in df_columns:
             if sub.lower() in str(col).lower():
@@ -70,7 +64,6 @@ def find_column_by_substring(df_columns: list, substrings: list) -> str | None:
     return None
 
 def parse_currency_to_float(value: str | float) -> float | None:
-    """Converts a currency string or a number to a float."""
     if isinstance(value, (int, float)):
         return float(value) if value > 0 else None
     if not isinstance(value, str):
@@ -82,7 +75,6 @@ def parse_currency_to_float(value: str | float) -> float | None:
         return None
 
 def find_excel_header_row(file_path, num_rows_to_check=20):
-    """Finds the header row in an Excel file."""
     try:
         df_temp = pd.read_excel(file_path, header=None, nrows=num_rows_to_check)
         header_keywords = ['produto', 'descrição', 'ean', 'código', 'codprod', 'descricao']
@@ -97,7 +89,6 @@ def find_excel_header_row(file_path, num_rows_to_check=20):
         return 0
 
 def is_price_column(column_series, column_name):
-    """Robustly determines if a column is a price column."""
     column_name_lower = str(column_name).lower()
     if any(kw in column_name_lower for kw in ['%', 'desconto', 'desc']):
         return False
@@ -107,13 +98,11 @@ def is_price_column(column_series, column_name):
     price_like_count = sum(1 for value in sample if parse_currency_to_float(value) is not None and parse_currency_to_float(value) >= 1)
     return (price_like_count / len(sample)) >= 0.5
 
-def run_ai_powered_matching(model_path: str, moleculas_file: str, price_files_dir: str, similarity_threshold: int = 95):
-    """The main function to perform the entire matching process using the trained AI model."""
+def ai_powered_matching(model_path: str, moleculas_file: str, price_files_dir: str, similarity_threshold: int = 95):
     model, tokenizer, device = load_model_and_tokenizer(model_path)
     if not model:
         return
 
-    # --- 1. Load and Standardize Moleculas File ---
     print("\n--- Processing Main Moleculas File ---")
     try:
         df_moleculas = pd.read_excel(moleculas_file, sheet_name="GENERICO")
@@ -134,7 +123,6 @@ def run_ai_powered_matching(model_path: str, moleculas_file: str, price_files_di
         print(f"❌ ERROR: Failed to process {moleculas_file}. {e}")
         return
 
-    # --- 2. Process Each Price File ---
     print("\n--- Processing Price Files ---")
     verified_log = []
 
@@ -169,7 +157,6 @@ def run_ai_powered_matching(model_path: str, moleculas_file: str, price_files_di
             )
             price_choices = df_price_std.dropna(subset=['standardized_name'])
 
-            # --- 3. Perform Matching ---
             price_col_name = f'Price_{os.path.splitext(filename)[0]}'
             df_final_output[price_col_name] = None
 
@@ -207,7 +194,6 @@ def run_ai_powered_matching(model_path: str, moleculas_file: str, price_files_di
         except Exception as e:
             print(f"  ERROR processing {filename}: {e}")
 
-    # --- 4. Save Final Files ---
     print("\n--- AI Matching Complete ---")
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -229,13 +215,13 @@ def run_ai_powered_matching(model_path: str, moleculas_file: str, price_files_di
         print("ℹ️ No matches were found by the AI model.")
 
 
-if __name__ == '__main__':
-    # --- Configuration ---
-    script_directory = os.path.dirname(os.path.abspath(__file__))
-    MODEL_PATH = os.path.join(script_directory, "..", "models", "t5-pharma-translator-v10")
-    MOLECULAS_FILE = os.path.join(script_directory, "..", "data", "raw", "moleculas.xls")
-    PRICE_FILES_DIR = os.path.join(script_directory, "..", "data", "raw", "prices")
-
-    SIMILARITY_THRESHOLD = 90
-
-    run_ai_powered_matching(MODEL_PATH, MOLECULAS_FILE, PRICE_FILES_DIR, similarity_threshold=SIMILARITY_THRESHOLD)
+# if __name__ == '__main__':
+#     # --- Configuration ---
+#     script_directory = os.path.dirname(os.path.abspath(__file__))
+#     MODEL_PATH = os.path.join(script_directory, "..", "models", "t5-pharma-translator-v12")
+#     MOLECULAS_FILE = os.path.join(script_directory, "..", "data", "raw", "moleculas.xls")
+#     PRICE_FILES_DIR = os.path.join(script_directory, "..", "data", "raw", "prices")
+#
+#     SIMILARITY_THRESHOLD = 90
+#
+#     ai_powered_matching(MODEL_PATH, MOLECULAS_FILE, PRICE_FILES_DIR, similarity_threshold=SIMILARITY_THRESHOLD)

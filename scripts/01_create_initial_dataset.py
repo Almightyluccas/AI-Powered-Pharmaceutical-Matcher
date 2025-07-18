@@ -4,20 +4,14 @@ import os
 from rapidfuzz import fuzz
 
 def get_standardized_features(name):
-    """
-    Extracts structured features and creates a highly standardized base name
-    for the most accurate comparison.
-    """
     if not isinstance(name, str):
         return {'original': '', 'base_name': '', 'dosage': 0, 'quantity': 0}
 
     original_name = name
     name = name.lower().replace('+', ' ')
 
-    # Pre-standardize specific known abbreviations
     name = re.sub(r'val\.', 'valerato ', name)
 
-    # --- Feature Extraction (before extensive manipulation) ---
     dosage_val = 0
     if dosage_match := re.search(r'(\d[\d.,]*)\s*(mg|ml|g)\b', name):
         try:
@@ -33,10 +27,8 @@ def get_standardized_features(name):
     elif q_match := re.search(r'(\d+)\s*(comp|cap|cps|cpr|drg|comprimido|capsula)', name):
         quantity = int(q_match.group(1))
     elif g_match := re.search(r'(\d+)\s*g\b', name) and dosage_val == 0:
-        # Handle cases like "POM 20G" as quantity if no mg/ml dosage is found
         quantity = int(g_match.group(1))
 
-    # --- Text Standardization for Fuzzy Matching ---
     replacements = {
         r'\bc\b': 'com', r'\bcomp\b': 'comprimido', r'\bcompr\b': 'comprimido', r'\bcpr\b': 'comprimido',
         r'\bcps\b': 'capsula', r'\bcap\b': 'capsula', r'\bdrg\b': 'dragea', r'\bsusp\b': 'suspensao',
@@ -53,7 +45,7 @@ def get_standardized_features(name):
     for group_name, forms in form_groups.items():
         for form in forms: name = name.replace(form, group_name)
 
-    name = re.sub(r'[^a-z\s]', '', name) # Remove all non-alpha characters and numbers
+    name = re.sub(r'[^a-z\s]', '', name)
 
     noise_words = [
         'mg', 'ml', 'g', 'nova', 'bio', 'rev', 'ems', 'neo', 'quimica', 'eurofarma', 'medley',
@@ -186,7 +178,6 @@ def update_medicine_prices_dynamic(moleculas_file_path, moleculas_sheet_name, pr
     log_df = pd.DataFrame(match_log)
     return df_moleculas, log_df
 
-# --- Configuration and Execution ---
 moleculas_file_path = r"../data/raw/moleculas.xls"
 moleculas_main_sheet_name = "GENERICO"
 price_files_directory = r"../data/raw/prices"

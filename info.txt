@@ -9,3 +9,13 @@ v7 had to start from scratch due to error being found. eval_loss is 0.0237. gave
 v8 eval_loss is 0.0057. gave me 336 total results. Filtered down to 241.
 v9 eval_loss is ???. gave me 387 total results. Filtered down to 278.
 v10 eval_loss is 0.009 gave me 452 total results. Filtered down to 321.
+v11 eval_loss is 0.0059. gave me 518 total results. Filtered down to 366
+
+
+
+
+
+
+
+CREATE A MASTER DATASET instead of starting from fresh... make sure to remove duplicated.. Flip input and target field since i had it backwards :(
+ALSO maybe incorporate clean_target_text into main.py
